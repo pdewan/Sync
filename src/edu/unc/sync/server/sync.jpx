@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--JBuilder XML Project-->
+<project>
+  <property category="runtime" name="DefaultConfiguration" value="-1"/>
+  <property category="runtime.0" name="BuildTargetOnRun" value="com.borland.jbuilder.build.ProjectBuilder$ProjectBuildAction;make"/>
+  <property category="runtime.0" name="ConfigurationName" value="Sync Server"/>
+  <property category="runtime.0" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.0" name="application.class" value="edu.unc.sync.server.SyncServer"/>
+  <property category="serverservices" name="single.server.name" value="Tomcat 4.0"/>
+  <property category="sys" name="AuthorLabel" value="@author"/>
+  <property category="sys" name="BackupPath" value="bak"/>
+  <property category="sys" name="CheckStable" value="1"/>
+  <property category="sys" name="Company" value=""/>
+  <property category="sys" name="CompanyLabel" value="Company:"/>
+  <property category="sys" name="Copyright" value="Copyright (c) 2004"/>
+  <property category="sys" name="CopyrightLabel" value="Copyright:"/>
+  <property category="sys" name="DefaultPath" value="src"/>
+  <property category="sys" name="Description" value=""/>
+  <property category="sys" name="DescriptionLabel" value="Description:"/>
+  <property category="sys" name="DocPath" value="doc"/>
+  <property category="sys" name="ExcludeClassEnabled" value="0"/>
+  <property category="sys" name="IncludeTestPath" value="1"/>
+  <property category="sys" name="InstanceVisibility" value="2"/>
+  <property category="sys" name="JDK" value="java 1.3.1-b24"/>
+  <property category="sys" name="LastTag" value="0"/>
+  <property category="sys" name="Libraries" value=""/>
+  <property category="sys" name="MakeStable" value="0"/>
+  <property category="sys" name="OutPath" value="../../../../bin"/>
+  <property category="sys" name="SourcePath" value="src;test"/>
+  <property category="sys" name="TestPath" value="test"/>
+  <property category="sys" name="Title" value=""/>
+  <property category="sys" name="TitleLabel" value="Title:"/>
+  <property category="sys" name="Version" value="1.0"/>
+  <property category="sys" name="VersionLabel" value="@version"/>
+  <property category="sys" name="WorkingDirectory" value="."/>
+  <file path="ChangeVector.java"/>
+  <file path="Folder.java"/>
+  <file path="FolderEditor.java"/>
+  <file path="FolderTreeNode.java"/>
+  <file path="FolderTreeNodeCopy.java"/>
+  <file path="GarbageCollectionDialog.java"/>
+  <file path="ObjectServerInterface.java"/>
+  <file path="PropertiesEditorDialog.java"/>
+  <file path="PropertiesTable.java"/>
+  <file path="RemoteSyncClient.java"/>
+  <file path="RemoteSyncServer.java"/>
+  <file path="RT_SyncApplication.java"/>
+  <file path="SortedStringVector.java"/>
+  <file path="SyncApplication.java"/>
+  <file path="SyncClient.java"/>
+  <file path="SyncClientBeanInfo.java"/>
+  <file path="SyncClientInterface.java"/>
+  <file path="SyncClientOpenDialog.java"/>
+  <file path="SyncClientTreeRoot.java"/>
+  <file path="SyncDriver.java"/>
+  <file path="SyncException.java"/>
+  <file path="SyncObjectServer.java"/>
+  <file path="SyncServer.java"/>
+  <file path="SyncServerInterface.java"/>
+  <file path="TooManyObjectsException.java"/>
+  <file path="TreeModelMonitor.java"/>
+  <file path="ChangeVector.class"/>
+  <file path="Folder$1.class"/>
+  <file path="Folder.class"/>
+  <file path="FolderEditor.class"/>
+  <file path="FolderTreeNode$1.class"/>
+  <file path="FolderTreeNode.class"/>
+  <file path="FolderTreeNodeCopy$1.class"/>
+  <file path="FolderTreeNodeCopy.class"/>
+  <file path="GarbageCollectionDialog$1.class"/>
+  <file path="GarbageCollectionDialog$2.class"/>
+  <file path="GarbageCollectionDialog$3.class"/>
+  <file path="GarbageCollectionDialog$4.class"/>
+  <file path="GarbageCollectionDialog.class"/>
+  <file path="ObjectServerInterface$1.class"/>
+  <file path="ObjectServerInterface$10.class"/>
+  <file path="ObjectServerInterface$11.class"/>
+  <file path="ObjectServerInterface$12.class"/>
+  <file path="ObjectServerInterface$13.class"/>
+  <file path="ObjectServerInterface$14.class"/>
+  <file path="ObjectServerInterface$2.class"/>
+  <file path="ObjectServerInterface$3.class"/>
+  <file path="ObjectServerInterface$4.class"/>
+  <file path="ObjectServerInterface$5.class"/>
+  <file path="ObjectServerInterface$6.class"/>
+  <file path="ObjectServerInterface$7.class"/>
+  <file path="ObjectServerInterface$8.class"/>
+  <file path="ObjectServerInterface$9.class"/>
+  <file path="ObjectServerInterface$FolderEditMenu.class"/>
+  <file path="ObjectServerInterface$FolderMouseAdapter.class"/>
+  <file path="ObjectServerInterface$NewObjectListener.class"/>
+  <file path="ObjectServerInterface$ObjectTreeListener.class"/>
+  <file path="ObjectServerInterface.class"/>
+  <file path="PropertiesEditorDialog$1.class"/>
+  <file path="PropertiesEditorDialog$2.class"/>
+  <file path="PropertiesEditorDialog$3.class"/>
+  <file path="PropertiesEditorDialog$4.class"/>
+  <file path="PropertiesEditorDialog$5.class"/>
+  <file path="PropertiesEditorDialog.class"/>
+  <file path="PropertiesTable.class"/>
+  <file path="RemoteSyncClient.class"/>
+  <file path="RemoteSyncServer.class"/>
+  <file path="RT_SyncApplication.class"/>
+  <file path="SortedStringVector.class"/>
+  <file path="SyncApplication.class"/>
+  <file path="SyncClient.class"/>
+  <file path="SyncClientBeanInfo.class"/>
+  <file path="SyncClientInterface$1.class"/>
+  <file path="SyncClientInterface$2.class"/>
+  <file path="SyncClientInterface$3.class"/>
+  <file path="SyncClientInterface$4.class"/>
+  <file path="SyncClientInterface$OpenServerListener.class"/>
+  <file path="SyncClientInterface.class"/>
+  <file path="SyncClientOpenDialog$1.class"/>
+  <file path="SyncClientOpenDialog$2.class"/>
+  <file path="SyncClientOpenDialog$3.class"/>
+  <file path="SyncClientOpenDialog$4.class"/>
+  <file path="SyncClientOpenDialog.class"/>
+  <file path="SyncClientTreeRoot.class"/>
+  <file path="SyncDriver.class"/>
+  <file path="SyncException.class"/>
+  <file path="SyncObjectServer.class"/>
+  <file path="SyncServer.class"/>
+  <file path="SyncServerInterface$1.class"/>
+  <file path="SyncServerInterface.class"/>
+  <file path="TooManyObjectsException.class"/>
+  <file path="TreeModelMonitor.class"/>
+</project>

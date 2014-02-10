@@ -1,0 +1,89 @@
+package edu.unc.sync.server;
+
+import edu.unc.sync.*;
+import java.util.Enumeration;
+import com.sun.java.swing.tree.*;
+
+public class FolderTreeNodeCopy implements TreeNode, java.io.Serializable
+{
+   TreeNode parent;
+   FolderTreeNodeCopy[] my_children;
+   String name;
+   ObjectID objectID;
+   String home = Sync.getProperty("localhost");
+
+   public FolderTreeNodeCopy(FolderTreeNode node)
+   {
+      parent = null;
+      name = node.toString();
+      objectID = node.getFolder().getObjectID();
+      my_children = new FolderTreeNodeCopy[node.getChildCount()];
+      for (int i = 0; i < node.getChildCount(); i++) {
+         my_children[i] = new FolderTreeNodeCopy((FolderTreeNode) node.getChildAt(i));
+         my_children[i].setParent(this);
+      }
+   }
+   
+   public void setParent(TreeNode node)
+   {
+      parent = node;
+   }
+
+   public String toString()
+   {
+      return name;
+   }
+
+   public ObjectID getObjectID()
+   {
+      return objectID;
+   }
+   
+   public String getHome()
+   {
+      return home;
+   }
+
+   public Enumeration children() 
+   {
+      return new Enumeration() {
+         int i = 0;
+         public Object nextElement() {
+            return my_children[i++]; }
+         public boolean hasMoreElements() {
+            return i < my_children.length; } };
+   }
+
+   public boolean getAllowsChildren()
+   {
+      return true;
+   }
+
+   public TreeNode getChildAt(int index)
+   {
+      return my_children[index];
+   }
+
+   public int getChildCount()
+   {
+      return my_children.length;
+   }
+
+   public boolean isLeaf()
+   {
+      return false;
+   }
+
+   public int getIndex(TreeNode child)
+   {
+      if (child instanceof FolderTreeNodeCopy) {
+         for (int i = 0; i < my_children.length; i++) if (my_children[i].equals(child)) return i;
+      }
+      return -1;
+   }
+
+   public TreeNode getParent()
+   {
+      return parent;
+   }
+}

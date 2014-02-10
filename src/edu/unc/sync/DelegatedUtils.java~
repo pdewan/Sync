@@ -1,0 +1,145 @@
+package edu.unc.sync;
+
+import bus.uigen.*;
+import java.lang.*;
+import java.lang.reflect.*;
+import java.beans.*;
+
+public class DelegatedUtils
+{
+	// this class is not to be initialized, hence the private constructor
+	// use only static methods
+	private DelegatedUtils(){
+	}
+	
+	public static boolean isAddPropertyChangeListenerMethod(Method method) {
+		String name = method.getName();
+		if (name.startsWith("addPropertyChangeListener")) {
+			Class[] params = method.getParameterTypes();
+			if (params.length == 1 &&				PropertyChangeListener.class.isAssignableFrom(params[0]))
+				return true;
+			else
+				return false;  		}		return false;
+	}
+	
+	public static Method getAddPropertyChangeListenerMethod(Class c) {		Method[] methods = c.getMethods();		for (int i = 0; i < methods.length; i++)			if (isAddPropertyChangeListenerMethod(methods[i])) return methods[i];		return null;	}
+	
+	public static boolean isAddVectorMethodsListenerMethod(Method method) {
+		String name = method.getName();
+		if (name.startsWith("addVectorMethodsListener")) {
+			Class[] params = method.getParameterTypes();
+			if (params.length == 1 &&				VectorMethodsListener.class.isAssignableFrom(params[0]))
+				return true;
+			else
+				return false;  		}		return false;
+	}
+	
+	public static Method getAddVectorMethodsListenerMethod(Class c) {		Method[] methods = c.getMethods();		for (int i = 0; i < methods.length; i++)			if (isAddVectorMethodsListenerMethod(methods[i])) return methods[i];		return null;	}
+	
+	public static boolean isAddHashtableListenerMethod(Method method) {
+		String name = method.getName();
+		if (name.startsWith("addHashtableListener")) {
+			Class[] params = method.getParameterTypes();
+			if (params.length == 1 &&				HashtableListener.class.isAssignableFrom(params[0]))
+				return true;
+			else
+				return false;  		}		return false;
+	}
+	
+	public static Method getAddHashtableListenerMethod(Class c) {		Method[] methods = c.getMethods();		for (int i = 0; i < methods.length; i++)			if (isAddHashtableListenerMethod(methods[i])) return methods[i];		return null;	}
+	
+	public static boolean isDelegationObject(Class c){
+		if (null == c)
+			return false;
+		else
+			return true;
+				//(getAddPropertyChangeListenerMethod(c) != null);
+	}
+	
+	public static boolean isDelegationObject(Object o){
+		if (null == o)
+			return false;
+		else
+			return isDelegationObject(o.getClass());
+	}
+	
+	public static boolean isDelegationVector(Class c){
+		if (null == c)
+			return false;
+		else
+			return
+				//(getAddVectorMethodsListenerMethod(c) != null) &&
+				 ((uiBean.getAddElementMethod(c) != null) &&
+				 (uiBean.getInsertElementAtMethod(c) != null) &&
+				 (uiBean.getRemoveElementMethod(c) != null) &&
+				 (uiBean.getRemoveElementAtMethod(c) != null) &&
+				 (uiBean.getSetElementAtMethod(c) != null) &&
+				 (uiBean.getSizeMethod(c) != null) &&
+				 (uiBean.getElementsMethod(c) != null) &&
+				 (uiBean.getElementAtMethod(c) != null) &&
+				 (uiBean.getIndexOfMethod(c) != null));
+	}
+	
+	public static boolean isDelegationVector(Object o){
+		if (null == o)
+			return false;
+		else
+			return isDelegationVector(o.getClass());
+	}
+	
+	public static boolean isDelegationHashtable(Class c){
+		if (null == c)
+			return false;
+		else
+			return
+				//(getAddHashtableListenerMethod(c) != null) &&
+				 ((uiBean.getGetMethod(c) != null) &&
+				 (uiBean.getPutMethod(c) != null) &&
+				 (uiBean.getRemoveMethod(c) != null) &&
+				 (uiBean.getSizeMethod(c) != null) &&
+				 (uiBean.getElementsMethod(c) != null) &&
+				 (uiBean.getKeysMethod(c) != null));
+	}
+	
+	public static boolean isDelegationHashtable(Object o){
+		if (null == o)
+			return false;
+		else
+			return isDelegationHashtable(o.getClass());
+	}
+	
+	public static Replicated convertObject(int i){
+		return new ReplicatedInteger(i);
+	}
+	
+	public static Replicated convertObject(float x){
+		return new ReplicatedFloat(x);
+	}
+	
+	public static Replicated convertObject(Object o){
+		if (o instanceof Integer){
+			return new ReplicatedInteger((Integer)o);
+		}
+		
+		if (o instanceof Float){
+			return new ReplicatedFloat((Float)o);
+		}
+		if (o instanceof String){
+			return new ReplicatedString((String)o);
+		}
+		
+		if (isDelegationObject(o)){
+			return new DelegatedReplicatedObject(o);
+		}
+		
+		if (isDelegationVector(o)){
+			return new DelegatedReplicatedSequence(o);
+		}
+		
+		if (isDelegationHashtable(o)){
+			return new DelegatedReplicatedDictionary(o);
+		}
+		
+		return null;
+	}
+}

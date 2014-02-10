@@ -1,0 +1,185 @@
+package edu.unc.sync.server;
+
+import edu.unc.sync.*;
+import java.util.*;
+import java.io.*;
+import java.rmi.*;
+import java.rmi.server.UnicastRemoteObject;
+import com.sun.java.swing.*; 
+import com.sun.java.swing.tree.*;
+import bus.uigen.ObjectEditor;
+
+public class SyncClient extends UnicastRemoteObject implements RemoteSyncClient
+{
+   SyncObjectServer object_server;
+   public SyncClientInterface ui;
+   String name;
+
+   public SyncClient(PropertiesTable properties, String myname) throws RemoteException
+   {
+	  name = myname;
+      object_server = Sync.getObjectServer();
+      ui = new SyncClientInterface(this, properties);
+      // new BasicMergeActions();  // not used anymore
+   }
+   
+   public SyncClient(PropertiesTable properties, String myname, String server_name) throws RemoteException
+   {
+	   name = myname;
+	   object_server = Sync.getObjectServer();
+	   ui = new SyncClientInterface(this, properties);
+	   ui.openAndReplicateServer(server_name);
+   }
+   
+   public void notifyAction() throws RemoteException{
+	   try{
+		   Sync.synchronize();
+	   }
+	   catch(Exception ex){
+		   throw new RemoteException(ex.toString());
+	   }
+   }
+   
+   // handles all synchronization tasks
+   // return value is used for error messages, null for success
+   public synchronized String[] synchronize(Replicated obj)
+   {
+      String server_addr = obj.getHome();
+      String port = Sync.getProperty("sync.rmiregistry.port");
+      String url = "rmi://" + server_addr + ":" + port + "/SyncServer";
+      try {
+         RemoteSyncServer server = (RemoteSyncServer) Naming.lookup(url);
+         Change change = obj.getChange();
+         if (change == null) change = new NullChange();
+         System.out.println("Changes sent for synchronization:");
+         change.print();
+         change.setFromVersion(obj.getVersion());
+         Change apply = server.synchronizeObject(obj.getObjectID(), change, name, this);
+         System.out.println("Changes received in reply:");
+         apply.print();
+         if (!(apply instanceof NullChange)) {
+            Change rejected = obj.applyChange(apply);
+            System.out.println("Changes rejected:");
+            if (rejected != null) rejected.print();
+            else System.out.println("none");
+         }
+         obj.setVersion(apply.getToVersion());
+         obj.clearChanged();
+		 ui.doRefresh();
+      } catch (Exception ex) {
+		 System.out.println("#############");
+         ex.printStackTrace();
+         return new String[] {"Error synchronizing object", ex.toString()};
+      }
+      return null;
+   }
+   
+   public void shutdown()
+   {
+      if (object_server != null) {
+         try {
+            object_server.shutdown();
+         } catch (SyncException ex) {
+            System.err.println("Error shutting down Sync object server: " + ex);
+         }
+      }
+   }
+
+   public static void main(String[] args)
+   {
+      Properties sync_props = new Properties();
+      File sync_props_file = new File(System.getProperty("user.home") + File.separator + "sync.jprops");
+      try {
+         sync_props.load(new FileInputStream(sync_props_file));
+         Sync.setProperties(sync_props);
+      } catch (Exception ex) {
+         System.err.println(ex);
+         System.exit(1);
+      }
+
+      String client_home = sync_props.getProperty("sync.client.home");
+      try {
+         new SyncObjectServer(client_home);
+      } catch (Exception e) {
+         System.err.println(e);
+         e.printStackTrace();
+         System.exit(1);
+      }
+
+      try {
+         File props_file = new File(client_home, "client.jprops");
+         // add client properties to Sync properties so they are accessible
+         // from within Replicated objects via static Sync.getProperty method
+         sync_props.load(new FileInputStream(props_file));
+         PropertiesTable client_props = new PropertiesTable(props_file);
+		 
+		 String host_name;
+		 try {
+			 host_name = java.net.InetAddress.getLocalHost().getHostName();
+			 if (host_name.indexOf('.') == -1) host_name = host_name + "." + sync_props.getProperty("domain");
+		 } catch (java.net.UnknownHostException ex) {
+			 host_name = "localhost";
+		 }
+		 
+		 // String host_name = sync_props.getProperty("localhost");
+		 String port = sync_props.getProperty("sync.rmiregistry.port");
+		 SyncClient client = null;
+		 
+		 // Create and install a security manager
+		 //System.setSecurityManager(new RMISecurityManager());
+		 
+		 try{
+			 String name = "//" + host_name + ":" + port + "/SyncClient";
+			 
+			 client = new SyncClient(client_props, name);
+			 
+			 if (args.length >=1){
+				 if (args[0].equals(new String("driver"))){
+					 SyncDriver driver = new SyncDriver(client);
+					 ObjectEditor.edit(driver);
+				 }
+			 }
+					 
+			 /*
+			 if (args.length >=1)
+			 {
+				 if (args[0].equals(new String("s")))
+					 Sync.setSyncMode(true);
+				 else
+					 Sync.setSyncMode(false);
+				 
+				 if (args.length >=2)
+				 {
+					 String server_name = args[1];
+					 client = new SyncClient(client_props, name, server_name);
+				 }
+				 else
+					 client = new SyncClient(client_props, name);
+			 }
+			 else
+			 {
+				 Sync.setSyncMode(false);
+				 client = new SyncClient(client_props, name);
+			 }
+			 */
+			 
+			 //System.out.println("will try to rebind");
+			 //Naming.rebind(name, client);
+			 //System.out.println(name + " bound in registry");
+		 }
+		 catch (Exception e) {
+			 System.out.println("111111111111");
+			 System.out.println("SyncClient error: " + e.getMessage());
+			 e.printStackTrace();
+		 }
+		
+		 // trying something new -- Vibhor
+		 Sync.setSyncClient(client);
+         //
+         System.out.println("Started Sync client");
+      } catch (Exception ex) {
+         System.err.println("Error loading properties: " + ex);
+         System.exit(1);
+      }
+   }
+}

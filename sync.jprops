@@ -1,0 +1,4 @@
+sync.rmiregistry.port = 1099
+sync.client.home = H:\\buzzard\\dewan\\cb\\sync\\client
+sync.server.home = H:\\buzzard\\dewan\\cb\\sync\\server
+domain = cs.unc.edu

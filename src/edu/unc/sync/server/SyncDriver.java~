@@ -1,0 +1,23 @@
+package edu.unc.sync.server;
+
+import edu.unc.sync.*
+
+public class SyncDriver
+{
+    private SyncClientInterface ui;
+
+    public assignUI(SyncClientInterface uInterface){
+	ui = uInterface;
+    }
+
+    public boolean getSyncMode(){
+	return Sync.getSyncMode();
+    }
+
+    public void setSyncMode(boolean mode){
+	Sync.setSyncMode(mode);
+    }
+
+    public void openAndReplicateServer(String name){
+	ui.openAndReplicateServer(name);
+    }

@@ -1,0 +1,226 @@
+package edu.unc.sync;
+
+import bus.uigen.*;
+import java.util.*;
+import java.io.*;
+import java.lang.reflect.*;
+
+public class DelegatedReplicatedDictionary extends ReplicatedDictionary implements Delegated, HashtableListener
+{
+	private Object obj;
+
+	public DelegatedReplicatedDictionary(Object o){
+		super();
+		obj = o;
+		if (null != obj){
+			update();
+		}
+	}
+	
+	public void update(){
+		try{
+			Object key;
+			Replicated repl;
+			Method keysMethod = uiBean.getKeysMethod(obj.getClass());
+			Method getMethod = uiBean.getGetMethod(obj.getClass());
+			
+			for (Enumeration e = (Enumeration) keysMethod.invoke(obj, null); e.hasMoreElements(); ){
+				key = e.nextElement();
+				
+				Object[] args = new Object[1];
+				args[0] = key;
+				Object value = getMethod.invoke(obj, args);
+				Replicated repl1 = this.get(key);
+				if (null == repl1){
+					Replicated replValue = DelegatedUtils.convertObject(value);
+					this.put(key, replValue);
+					System.out.println("000000000000000000");
+				}
+				if (repl1 instanceof Delegated){
+					if (((Delegated) repl1).returnObject() != value){
+						Replicated replValue = DelegatedUtils.convertObject(value);
+						this.put(key, replValue);
+						System.out.println("111111111111111111111");
+					}
+				}
+				else{
+					if (repl1 instanceof ReplicatedAtomic){
+						if (!value.equals(((ReplicatedAtomic)repl1).getValue())){
+							//Replicated replValue = DelegatedUtils.convertObject(value);
+							//this.put(key, replValue);
+							((ReplicatedAtomic)repl1).setValue((Serializable)value);
+							System.out.println("22222222222222");
+						}
+					}	
+				}
+			}
+			
+			for (Enumeration e = this.keys(); e.hasMoreElements(); ){
+				key = e.nextElement();
+				repl = this.get(key);			
+				
+				Object[] args = new Object[1];
+				args[0] = key;
+				Object value = getMethod.invoke(obj, args);
+				
+				if (null == value){
+					this.remove(key);
+					System.out.println("calling this.remove() is update()");
+					continue;
+				}
+				
+				if (repl instanceof Delegated){
+					((Delegated)repl).update();
+				}
+				else{
+					if (repl instanceof ReplicatedAtomic){
+						Object[] args1 = new Object[1];
+						args1[0] = key;
+						Object o = null;
+						try{
+							o = getMethod.invoke(obj, args1);
+						}
+						catch (Exception ex){
+							System.out.println(ex.toString());
+							System.out.println(ex.getMessage());
+							ex.printStackTrace();
+						}
+						
+						ReplicatedAtomic replAtomic = (ReplicatedAtomic) repl;
+						if (!o.equals(replAtomic.getValue())){
+							replAtomic.setValue((Serializable)o);
+						}
+					}
+					else{
+						return;
+					}
+				}
+			}
+		}
+		catch (Exception ex){
+			System.out.println(ex.toString());
+			System.out.println(ex.getMessage());
+			ex.printStackTrace();
+		}
+	}
+	
+	public void copyBack(){
+		try{
+			Object key;
+			// remove keys first
+			Method keysMethod = uiBean.getKeysMethod(obj.getClass());
+			for (Enumeration e = (Enumeration) keysMethod.invoke(obj, null); e.hasMoreElements(); ){
+				key = e.nextElement();
+				if (null == this.get(key)){
+					Method removeMethod = uiBean.getRemoveMethod(obj.getClass());
+					Object[] args = new Object[1];
+					args[0] = key;
+					removeMethod.invoke(obj, args);
+				}
+			}
+			
+			Replicated repl;
+			for (Enumeration e = this.keys(); e.hasMoreElements(); ){
+				key = e.nextElement();
+				repl = this.get(key);
+				
+				Method putMethod = uiBean.getPutMethod(obj.getClass());
+				Object[] args = new Object[2];
+				args[0] = key;
+				
+				if (repl instanceof Delegated){
+					((Delegated)repl).copyBack();
+					args[1] = ((Delegated)repl).returnObject();
+					putMethod.invoke(obj, args);
+				}
+				else{
+					if (repl instanceof ReplicatedAtomic){
+						Serializable value = ((ReplicatedAtomic)repl).getValue();
+						args[1] = value;
+						putMethod.invoke(obj,args);
+						/*
+						try{
+						Method getMethod = uiBean.getGetMethod(obj.getClass());
+						Object[] args1 = new Object[1];
+						args1[0] = key;
+						Object o = getMethod.invoke(obj, args1);
+						
+						if (!value.equals(o)){
+						Object[] args2 = new Object[2];
+						args2[0] = key;
+						args2[1] = value;
+						Method putMethod = uiBean.getPutMethod(obj.getClass());
+						putMethod.invoke(obj, args2);
+						}
+						}
+						catch (Exception ex){
+						System.out.println(ex.toString());
+						System.out.println(ex.getMessage());
+						ex.printStackTrace();
+						}
+						*/
+					}
+					else{
+						return;
+					}
+				}
+			}
+		}
+		catch (Exception ex){
+			System.out.println(ex.toString());
+			System.out.println(ex.getMessage());
+			ex.printStackTrace();
+		}
+	}
+	
+	public void registerAsListener(){		
+		if (null != obj){
+			Method m = DelegatedUtils.getAddHashtableListenerMethod(obj.getClass());
+
+			if (null != m){
+				Object[] args = new Object[1];
+				args[0] = this;
+				try{
+					m.invoke(obj, args);
+				}
+				catch (Exception e){
+					System.out.println(e.toString());
+					System.out.println(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public Object returnObject(){
+		return obj;
+	}
+	
+	public void keyPut(Object key, Object value, int newSize){
+		System.out.println("reached DelegatedReplicatedDictionary.keyPut()");
+		Object element = this.get(key);
+		
+		if (value != element){
+			Replicated repl = DelegatedUtils.convertObject(value);
+			this.put(key, repl);
+		}
+	}
+	
+	public void keyRemoved(Object key, int newSize){
+		System.out.println("reached DelegatedReplicatedDictionary.keyRemoved()");
+		if (this.get(key) != null)
+			this.remove(key);
+	}
+	
+	public Change getChange()
+	{
+		update();
+		return super.getChange();
+	}
+
+	public Change applyChange(Change change) throws ReplicationException{
+		Change ch = super.applyChange(change);
+		copyBack();
+		return ch;
+	}
+}

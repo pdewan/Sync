@@ -1,0 +1,9 @@
+JAVAC=javac
+SYNC=/net/buzzard/dewan/colab/sync/bin/edu/unc/sync
+SYNC_SERVER=/net/buzzard/dewan/colab/sync/bin/edu/unc/sync/server
+
+all: *.class
+
+.SUFFIXES:.java .class
+
+.java.class:;$(JAVAC) $*.java;cp $*.class $(SYNC_SERVER)/ 

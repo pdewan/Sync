@@ -1,0 +1,361 @@
+package edu.unc.sync;
+
+import bus.uigen.*;
+import java.util.*;
+import java.io.*;
+import java.lang.reflect.*;
+
+public class DelegatedReplicatedSequence extends ReplicatedSequence implements Delegated, VectorMethodsListener
+{
+	private Object obj;
+    
+	public DelegatedReplicatedSequence(Object o){
+		super();
+		obj = o;
+		if (null != obj){
+			update();
+		}
+	}
+	
+	public void update(){
+		Replicated repl;
+		for (Enumeration e = this.elements(); e.hasMoreElements(); ){
+			repl = (Replicated)e.nextElement();
+			if (repl instanceof Delegated){
+				((Delegated)repl).update();
+			}
+			else{
+				if (repl instanceof ReplicatedAtomic){
+					int index = indexOf((Object)repl);
+					//Object o = obj.elementAt(index);
+					Object[] args = new Object[1];
+					args[0] = new Integer(index);
+					Object o = null;
+					try{
+						Method elementAtMethod = uiBean.getElementAtMethod(obj.getClass());
+						o = elementAtMethod.invoke(obj, args);
+					}
+					catch (Exception ex){
+						System.out.println(ex.toString());
+						System.out.println(ex.getMessage());
+						ex.printStackTrace();
+					}
+					
+					ReplicatedAtomic replAtomic = (ReplicatedAtomic) repl;
+					if (!o.equals(replAtomic.getValue())){
+						replAtomic.setValue((Serializable)o);
+					}
+				}
+				else{
+					return;
+				}
+			}
+		}
+	}
+	
+	public void copyBack(){
+		Replicated repl;
+		for (Enumeration e = this.elements(); e.hasMoreElements(); ){
+			repl = (Replicated)e.nextElement();
+			if (repl instanceof Delegated){
+				((Delegated)repl).copyBack();
+			}
+			else{
+				if (repl instanceof ReplicatedAtomic){
+					Serializable value = ((ReplicatedAtomic)repl).getValue();
+					int index = indexOf((Object)repl);
+					System.out.println("in copyBack(), index=" + index + " value=" + value);
+					//this.seqCopy.setElementAt(value, index);
+					//this.obj.setElementAt(value, index);
+					
+					try{
+						ReplicatedAtomic replAtomic = (ReplicatedAtomic)repl;
+						Method elementAtMethod = uiBean.getElementAtMethod(obj.getClass());
+						Object[] args1 = new Object[1];
+						args1[0] = new Integer(index);
+						if (!replAtomic.getValue().equals(elementAtMethod.invoke(obj, args1))){
+							Object[] args2 = new Object[2];
+							args2[0] = value;
+							args2[1] = new Integer(index);
+							Method setElementAtMethod = uiBean.getSetElementAtMethod(obj.getClass());
+							setElementAtMethod.invoke(obj, args2);
+						}
+					}
+					catch (Exception ex){
+						System.out.println(ex.toString());
+						System.out.println(ex.getMessage());
+						ex.printStackTrace();
+					}
+				}
+				else{
+					return;
+				}
+			}
+		}
+	}
+	
+	public void registerAsListener(){
+		//obj.addVectorMethodsListener(this);
+		if (null != obj){
+			Method m = DelegatedUtils.getAddVectorMethodsListenerMethod(obj.getClass());
+
+			if (null != m){
+				Object[] args = new Object[1];
+				args[0] = this;
+				try{
+					m.invoke(obj, args);
+				}
+				catch (Exception e){
+					System.out.println(e.toString());
+					System.out.println(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public Object returnObject(){
+		return obj;
+	}
+	
+	public void elementAdded(Object element, int newSize){
+		System.out.println("reached DelegatedReplicatedSequence.elementAdded()");
+		/*
+		Object o;
+		for (Enumeration e = seqCopy.elements(); e.hasMoreElements(); ){
+		o = e.nextElement();
+		if (o == element) return;
+		}
+		*/
+		if (newSize > this.size()){
+			//seqCopy.addElement(element);
+			System.out.println("reached after addElement");
+			Replicated repl = DelegatedUtils.convertObject(element);
+			System.out.println("repl is ");
+			System.out.println(repl);
+			addElement(repl);
+		}
+
+	}
+	
+	public void elementInserted(Object element, int pos, int newSize){
+		System.out.println("reached DelegatedReplicatedSequence.elementInserted(), pos=" + pos + " size=" + size());
+		/*
+		Object o;
+		for (Enumeration e = seqCopy.elements(); e.hasMoreElements(); ){
+		o = e.nextElement();
+		if (o == element) return;
+		}
+		*/
+		
+		if (newSize > this.size()){
+			//seqCopy.insertElementAt(element, pos);
+			Replicated repl = DelegatedUtils.convertObject(element);
+			insertElementAt(repl, pos);
+		}
+	}
+	
+	public void elementChanged(Object element, int pos){
+		System.out.println("reached DelegatedReplicatedSequence.elementChanged(), pos = " + pos + " size = " + size());
+		//seqCopy.setElementAt(element, pos);
+		//Replicated repl = DelegatedUtils.convertObject(element);
+		//removeElementAt(pos);
+		//insertElementAt(repl, pos);
+		Replicated repl = (Replicated) this.elementAt(pos);
+		if (repl instanceof Delegated){
+			((Delegated)repl).update();
+		}
+		else
+		{
+			if (repl instanceof ReplicatedAtomic){
+				((ReplicatedAtomic)repl).setValue((Serializable) element);
+			}
+		}
+		System.out.println("after elementChanged(), size=" + size());
+	}
+	
+	public void elementRemoved(int pos, int newSize){
+		System.out.println("reached DelegatedReplicatedSequence.elementRemoved(int, int)");
+		if (newSize < this.size()){
+			//seqCopy.removeElementAt(pos);
+			removeElementAt(pos);
+			System.out.println("removed element (int, int)");
+		}
+	}
+	
+	public void elementRemoved(Object element, int newSize){
+		System.out.println("reached DelegatedReplicatedSequence.elementRemoved(Object, int)");
+		if (newSize < this.size()){
+			Replicated elt;
+			int i = 0;
+			
+			for (Enumeration e = this.elements(); e.hasMoreElements(); ){
+				elt = (Replicated) e.nextElement();
+				if (elt instanceof Delegated){
+					if (((Delegated)elt).returnObject() == element){
+						System.out.println("removed element (Object, int)");
+						removeElementAt(i);
+						break;
+					}
+				}
+				else{
+					if (elt instanceof ReplicatedAtomic){
+						if (((ReplicatedAtomic)elt).getValue() == element){
+							System.out.println("removed element (Object, int)");
+							removeElementAt(i);
+							break;
+						}
+					}
+				}
+				i++;
+			}
+		}
+	}
+	
+	public Change getChange()
+	{
+		update();
+		return super.getChange();
+	}
+
+	public Change applyChange(Change change) throws ReplicationException
+	{
+		if (change == null || change instanceof NullChange | change instanceof NullSet) return null;
+
+		SequenceChangeSet changeset = (SequenceChangeSet) change;
+
+		Hashtable rej_del_mod = new Hashtable(5);
+		Hashtable rej_ins_mov = new Hashtable(5);
+
+		Method removeElementAtMethod = uiBean.getRemoveElementAtMethod(obj.getClass());
+		Method insertElementAtMethod = uiBean.getInsertElementAtMethod(obj.getClass());
+
+		// apply modifications and deletions first
+
+		for (Enumeration e = changeset.del_mod.elements(); e.hasMoreElements(); ) {
+			ElementChange ch = (ElementChange) e.nextElement();
+			// if element to which changes are to be applied does not exist, restore it
+			/*
+			if (ch instanceof ModifyChange & ch.conflicting) {
+			Replicated obj = Sync.getObject(ch.identifier());
+			if (indexOf(obj) == -1) {
+			obj.enableReplicated(this);
+			}
+			}
+			*/
+			int index = 0;
+			if (ch instanceof SequenceDeleteChange){
+				SequenceDeleteChange seqCh = (SequenceDeleteChange)ch;
+				index = indexOf((ObjectID)(seqCh.identifier()));
+				System.out.println("in applyChange(), index=" + index + " size=" + size());
+			}
+			
+			ElementChange reject = ch.applyTo(this);
+			if (reject != null && !(reject instanceof NullElementChange))
+				rej_del_mod.put(reject.identifier(), reject);
+			else{
+				if (ch instanceof SequenceDeleteChange){
+					//this.obj.removeElementAt(index);
+					Object[] args = new Object[1];
+					args[0] = new Integer(index);
+					try{
+						removeElementAtMethod.invoke(this.obj, args);
+					}
+					catch (Exception ex){
+						System.out.println(ex.toString());
+						System.out.println(ex.getMessage());
+						ex.printStackTrace();
+					}
+				}
+			}
+		}
+
+		// now add new elements and do moves.
+
+		// an element's position is indicated by the element it is to the left of.
+		// we iterate through the final_order array (backwards) to get the final
+		// position (in the originating replica) of the element being considered.
+
+		// the element to the right of the inserted element in the source
+		// replica's sequence may not exist in the target replica's sequence
+		// so we iteratively go up the source sequence until we find an
+		// element that exists in the target sequence.
+
+		for (int i = changeset.final_order.length - 2; i >= 0; i--) {
+			ObjectID oid = changeset.final_order[i];
+			ElementChange ins_mov = (ElementChange) changeset.ins_mov.get(oid);
+			if (ins_mov != null) {
+				Replicated obj;
+				if (ins_mov instanceof SequenceMoveChange) {
+					int index = indexOf(((SequenceMoveChange) ins_mov).eltID);
+					obj = elementAt(index);
+					removeElementAt(index);
+					//this.seqCopy.removeElementAt(index);
+					//this.obj.removeElementAt(index);
+					Object[] args = new Object[1];
+					args[0] = new Integer(index);
+					try{
+						removeElementAtMethod.invoke(this.obj, args);
+					}
+					catch (Exception ex){
+						System.out.println(ex.toString());
+						System.out.println(ex.getMessage());
+						ex.printStackTrace();
+					}
+					
+					if (obj == null) {
+						System.err.println("Error REPSEQ.MISSINGMOVE: element to be moved not found");
+						return null;
+					}
+					if (ins_mov.getConflicting()) rej_ins_mov.put(ins_mov.identifier(), ins_mov);
+				} else {
+					ObjectID insertedId = (ObjectID)((SequenceInsertChange) ins_mov).eltID;
+					obj = Sync.getObject(insertedId);
+				}
+
+				int index = 0;
+				for (int j = i + 1; j < changeset.final_order.length; j++) {
+					index = indexOf(changeset.final_order[j]);
+					if (index >= 0) break;
+				}
+
+				if (index < 0)
+					index = 0;
+				System.out.println("index=" + index);
+				insertElementAt(obj, index);
+				Object insertedElt;
+				if (obj instanceof Delegated){
+					insertedElt = ((Delegated)obj).returnObject();
+				}
+				else{
+					if (obj instanceof ReplicatedAtomic){
+						insertedElt = ((ReplicatedAtomic)obj).getValue();
+					}
+					else{
+						System.out.println("Class of inserted element not supported");
+						continue;
+					}
+				}
+				
+				//this.seqCopy.insertElementAt(insertedElt, index);
+				//this.obj.insertElementAt(insertedElt, index);
+				Object[] args = new Object[2];
+				args[0] = insertedElt;
+				args[1] = new Integer(index);
+				try{
+					insertElementAtMethod.invoke(this.obj, args);
+				}
+				catch (Exception ex){
+					System.out.println(ex.toString());
+					System.out.println(ex.getMessage());
+					ex.printStackTrace();
+				}
+			}
+		}
+
+		copyBack();
+		
+		if (rej_ins_mov.size() == 0 & rej_del_mod.size() == 0) return null;
+		else return new SequenceChangeSet(rej_ins_mov, rej_del_mod, getObjectID(), null);
+	}
+}

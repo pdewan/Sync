@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--JBuilder XML Project-->
+<project>
+  <property category="debug.0" name="SmartStepRedefineClasses" value="0"/>
+  <property category="debug.0" name="SmartStepSkipStaticInitializers" value="0"/>
+  <property category="debug.0" name="SmartStepSkipSynthetics" value="0"/>
+  <property category="runtime" name="DefaultConfiguration" value="-1"/>
+  <property category="runtime.0" name="BuildTargetOnRun" value="com.borland.jbuilder.build.ProjectBuilder$ProjectBuildAction;make"/>
+  <property category="runtime.0" name="ConfigurationName" value="Sync Client"/>
+  <property category="runtime.0" name="RunnableType" value="com.borland.jbuilder.runtime.ApplicationRunner"/>
+  <property category="runtime.0" name="application.class" value="edu.unc.sync.server.SyncClient"/>
+  <property category="runtime.0" name="application.parameters" value="driver localhost"/>
+  <property category="runtime.0" name="application.vmparameters" value="-Djava.security.policy=java.policy"/>
+  <property category="serverservices" name="single.server.name" value="Tomcat 4.0"/>
+  <property category="sys" name="AuthorLabel" value="@author"/>
+  <property category="sys" name="BackupPath" value="bak"/>
+  <property category="sys" name="BeansInstantiate" value="false"/>
+  <property category="sys" name="BraceStyle" value="0"/>
+  <property category="sys" name="CheckStable" value="1"/>
+  <property category="sys" name="Company" value=""/>
+  <property category="sys" name="CompanyLabel" value="Company:"/>
+  <property category="sys" name="Copyright" value="Copyright (c) 2004"/>
+  <property category="sys" name="CopyrightLabel" value="Copyright:"/>
+  <property category="sys" name="DefaultPath" value="."/>
+  <property category="sys" name="Description" value=""/>
+  <property category="sys" name="DescriptionLabel" value="Description:"/>
+  <property category="sys" name="DocPath" value="doc"/>
+  <property category="sys" name="EventMatch" value="false"/>
+  <property category="sys" name="EventStyle" value="1"/>
+  <property category="sys" name="ExcludeClassEnabled" value="0"/>
+  <property category="sys" name="IncludeTestPath" value="1"/>
+  <property category="sys" name="InstanceVisibility" value="2"/>
+  <property category="sys" name="JDK" value="java 1.3.1-b24"/>
+  <property category="sys" name="LastTag" value="0"/>
+  <property category="sys" name="Libraries" value="Swing 102;OE4;shapes"/>
+  <property category="sys" name="MakeStable" value="0"/>
+  <property category="sys" name="OutPath" value="bin"/>
+  <property category="sys" name="SourcePath" value=".;test"/>
+  <property category="sys" name="TestPath" value="test"/>
+  <property category="sys" name="Title" value=""/>
+  <property category="sys" name="TitleLabel" value="Title:"/>
+  <property category="sys" name="Version" value="1.0"/>
+  <property category="sys" name="VersionLabel" value="@version"/>
+  <property category="sys" name="WorkingDirectory" value="."/>
+  <node name="edu" type="Folder">
+    <node name="unc" type="Folder">
+      <node name="sync" type="Folder">
+        <node name="server" type="Folder">
+          <file path="edu/unc/sync/server/ChangeVector.java"/>
+          <file path="edu/unc/sync/server/Folder.java"/>
+          <file path="edu/unc/sync/server/FolderEditor.java"/>
+          <file path="edu/unc/sync/server/FolderTreeNode.java"/>
+          <file path="edu/unc/sync/server/FolderTreeNodeCopy.java"/>
+          <file path="edu/unc/sync/server/GarbageCollectionDialog.java"/>
+          <file path="edu/unc/sync/server/ObjectServerInterface.java"/>
+          <file path="edu/unc/sync/server/PropertiesEditorDialog.java"/>
+          <file path="edu/unc/sync/server/PropertiesTable.java"/>
+          <file path="edu/unc/sync/server/RemoteSyncClient.java"/>
+          <file path="edu/unc/sync/server/RemoteSyncServer.java"/>
+          <file path="edu/unc/sync/server/RT_SyncApplication.java"/>
+          <file path="edu/unc/sync/server/SortedStringVector.java"/>
+          <file path="edu/unc/sync/server/SyncApplication.java"/>
+          <file path="edu/unc/sync/server/SyncClient.java"/>
+          <file path="edu/unc/sync/server/SyncClientBeanInfo.java"/>
+          <file path="edu/unc/sync/server/SyncClientInterface.java"/>
+          <file path="edu/unc/sync/server/SyncClientOpenDialog.java"/>
+          <file path="edu/unc/sync/server/SyncClientTreeRoot.java"/>
+          <file path="edu/unc/sync/server/SyncDriver.java"/>
+          <file path="edu/unc/sync/server/SyncException.java"/>
+          <file path="edu/unc/sync/server/SyncObjectServer.java"/>
+          <file path="edu/unc/sync/server/SyncServer.java"/>
+          <file path="edu/unc/sync/server/SyncServerInterface.java"/>
+          <file path="edu/unc/sync/server/SyncTreeModel.java"/>
+          <file path="edu/unc/sync/server/TooManyObjectsException.java"/>
+          <file path="edu/unc/sync/server/TreeModelMonitor.java"/>
+        </node>
+        <file path="edu/unc/sync/AbstractMergeAction.java"/>
+        <file path="edu/unc/sync/Atomic.java"/>
+        <file path="edu/unc/sync/AtomicChange.java"/>
+        <file path="edu/unc/sync/AtomicMergeMatrix.java"/>
+        <file path="edu/unc/sync/BasicMergeActions.java"/>
+        <file path="edu/unc/sync/Change.java"/>
+        <file path="edu/unc/sync/ChangePair.java"/>
+        <file path="edu/unc/sync/ChangeSet.java"/>
+        <file path="edu/unc/sync/Delegated.java"/>
+        <file path="edu/unc/sync/DelegatedReplicatedDictionary.java"/>
+        <file path="edu/unc/sync/DelegatedReplicatedObject.java"/>
+        <file path="edu/unc/sync/DelegatedReplicatedSequence.java"/>
+        <file path="edu/unc/sync/DelegatedUtils.java"/>
+        <file path="edu/unc/sync/DelegationInterface.java"/>
+        <file path="edu/unc/sync/DelegationObjectInterface.java"/>
+        <file path="edu/unc/sync/DelegationVectorInterface.java"/>
+        <file path="edu/unc/sync/DictionaryChangeSet.java"/>
+        <file path="edu/unc/sync/DictionaryKeyChange.java"/>
+        <file path="edu/unc/sync/DictionaryMergeMatrix.java"/>
+        <file path="edu/unc/sync/DictionaryModifyChange.java"/>
+        <file path="edu/unc/sync/DictionaryPutChange.java"/>
+        <file path="edu/unc/sync/DictionaryRemoveChange.java"/>
+        <file path="edu/unc/sync/ElementChange.java"/>
+        <file path="edu/unc/sync/ElementChangePair.java"/>
+        <file path="edu/unc/sync/FieldModifyChange.java"/>
+        <file path="edu/unc/sync/GenericChangeSet.java"/>
+        <file path="edu/unc/sync/GlobalObject.java"/>
+        <file path="edu/unc/sync/MergeAction.java"/>
+        <file path="edu/unc/sync/MergeMatrix.java"/>
+        <file path="edu/unc/sync/ModifyChange.java"/>
+        <file path="edu/unc/sync/NullChange.java"/>
+        <file path="edu/unc/sync/NullElementChange.java"/>
+        <file path="edu/unc/sync/NullSet.java"/>
+        <file path="edu/unc/sync/ObjectID.java"/>
+        <file path="edu/unc/sync/ObjectMergeMatrix.java"/>
+        <file path="edu/unc/sync/RecordChangeSet.java"/>
+        <file path="edu/unc/sync/RecordMergeMatrix.java"/>
+        <file path="edu/unc/sync/Replicated.java"/>
+        <file path="edu/unc/sync/ReplicatedAtomic.java"/>
+        <file path="edu/unc/sync/ReplicatedBeanInfo.java"/>
+        <file path="edu/unc/sync/ReplicatedCollection.java"/>
+        <file path="edu/unc/sync/ReplicatedDictionary.java"/>
+        <file path="edu/unc/sync/ReplicatedFloat.java"/>
+        <file path="edu/unc/sync/ReplicatedInteger.java"/>
+        <file path="edu/unc/sync/ReplicatedObject.java"/>
+        <file path="edu/unc/sync/ReplicatedRecord.java"/>
+        <file path="edu/unc/sync/ReplicatedReference.java"/>
+        <file path="edu/unc/sync/ReplicatedSequence.java"/>
+        <file path="edu/unc/sync/ReplicatedString.java"/>
+        <file path="edu/unc/sync/ReplicatedStringBeanInfo.java"/>
+        <file path="edu/unc/sync/ReplicationException.java"/>
+        <file path="edu/unc/sync/SequenceChangeSet.java"/>
+        <file path="edu/unc/sync/SequenceDeleteChange.java"/>
+        <file path="edu/unc/sync/SequenceInsertChange.java"/>
+        <file path="edu/unc/sync/SequenceMergeMatrix.java"/>
+        <file path="edu/unc/sync/SequenceModifyChange.java"/>
+        <file path="edu/unc/sync/SequenceMoveChange.java"/>
+        <file path="edu/unc/sync/Sync.java"/>
+      </node>
+    </node>
+  </node>
+</project>

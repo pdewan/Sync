@@ -1,0 +1,21 @@
+# Symantec IDDE generated .dpd file. V: 7200
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\AbstractMergeAction.class: \
+	abstractmergeaction.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\Atomic.class: \
+	atomic.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\AtomicChange.class: \
+	atomicchange.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\AtomicMergeMatrix.class: \
+	atomicmergematrix.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\BasicMergeActions.class: \
+	basicmergeactions.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\Change.class: \
+	change.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\ChangePair.class: \
+	changepair.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\ChangeSet.class: \
+	changeset.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\Delegated.class: \
+	delegated.java 
+h:\buzzard\dewan\colab\sync\bin\edu\unc\sync\DelegatedReplicatedDictionary.class: \
+	delegatedreplicateddictionary.java 

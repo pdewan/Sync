@@ -1,0 +1,19 @@
+Microsoft Visual Studio Solution File, Format Version 1.00
+Project("{66355F20-A65B-11D0-BFB5-00A0C91EBFA0}") = "Sync", "Sync.vjp", "{70AC3830-03C3-11D3-B2DA-0060089CEC12}"
+EndProject
+Project("{66355F20-A65B-11D0-BFB5-00A0C91EBFA0}") = "Budget", "..\..\..\examples\budget\Budget.vjp", "{27FD0820-5F20-11D3-904B-005004ABE43A}"
+EndProject
+Project("{66355F20-A65B-11D0-BFB5-00A0C91EBFA0}") = "SyncDraw", "..\..\..\examples\SyncDraw\SyncDraw.vjp", "{319186B2-A938-11D3-905A-005004ABE47B}"
+EndProject
+Global
+	GlobalSection(LocalDeployment) = postSolution
+		StartupProject = {70AC3830-03C3-11D3-B2DA-0060089CEC12}
+	EndGlobalSection
+	GlobalSection(BuildOrder) = postSolution
+		0 = {70AC3830-03C3-11D3-B2DA-0060089CEC12}
+		1 = {27FD0820-5F20-11D3-904B-005004ABE43A}
+		2 = {319186B2-A938-11D3-905A-005004ABE47B}
+	EndGlobalSection
+	GlobalSection(DeploymentRoot) = postSolution
+	EndGlobalSection
+EndGlobal

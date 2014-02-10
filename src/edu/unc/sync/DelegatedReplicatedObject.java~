@@ -1,0 +1,341 @@
+package edu.unc.sync;
+
+import java.io.*;
+import java.util.*;
+import java.beans.*;
+import java.lang.reflect.*;
+
+public class DelegatedReplicatedObject extends ReplicatedCollection implements Delegated, PropertyChangeListener
+{
+	//private Hashtable fields;
+	//private ReplicatedDictionary replFields;
+	
+	//private Hashtable properties;
+	private ReplicatedDictionary replProperties;
+	protected static ObjectMergeMatrix class_merge_matrix = new ObjectMergeMatrix();
+	protected ObjectMergeMatrix inst_merge_matrix = null;
+	
+	static final long serialVersionUID = 7037530784112600988L;
+
+	private Object obj;
+	
+	public DelegatedReplicatedObject(Object o)
+	{
+		super();
+		obj = o;
+		//obj.addPropertyChangeListener(this);
+		
+		/*
+		fields = new Hashtable();
+		replFields = new ReplicatedDictionary();
+		replFields.setParent(this);
+		initializeReplicatedFields();
+		*/
+		
+		//properties = new Hashtable();
+		replProperties = new ReplicatedDictionary();
+		replProperties.setParent(this);
+		update();
+	}
+
+	public void registerAsListener(){
+		//obj.addPropertyChangeListener(this);
+		if (null != obj){
+			Method m = DelegatedUtils.getAddPropertyChangeListenerMethod(obj.getClass());
+
+			if (null != m){
+				Object[] args = new Object[1];
+				args[0] = this;
+				try{
+					m.invoke(obj, args);
+				}
+				catch (Exception e){
+					System.out.println(e.toString());
+					System.out.println(e.getMessage());
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public void propertyChange(PropertyChangeEvent evt){
+		System.out.println("In DelegatedReplicatedObject, propertyChange() called");
+		setChanged();
+	}
+	
+	public Object returnObject(){
+		return obj;
+	}
+	
+	public void update()
+	{
+		Class clss = obj.getClass();
+		
+		try{
+			BeanInfo beanInfo = Introspector.getBeanInfo(clss);
+			PropertyDescriptor[] properties_arr = beanInfo.getPropertyDescriptors();
+			
+			for (int i=0; i < properties_arr.length; i++){
+				Method readMethod = properties_arr[i].getReadMethod();
+				Method writeMethod = properties_arr[i].getWriteMethod();
+
+				if ((readMethod != null) && (writeMethod != null)){
+					String prop_name = readMethod.getName();
+					Class prop_class = readMethod.getReturnType();
+					String prop_class_name = prop_class.getName();
+					Object prop_obj = readMethod.invoke(obj, null);
+					
+					System.out.println("Property class name is: " + prop_class_name);
+					
+					Replicated repl = (Replicated)replProperties.get(prop_name);
+					if (repl != null){
+						Serializable o = (Serializable)readMethod.invoke(obj, null);
+						if (repl instanceof ReplicatedAtomic){
+							ReplicatedAtomic replAtomic = (ReplicatedAtomic) repl;
+							if (!o.equals(replAtomic.getValue())){
+								System.out.println("Value of " + prop_name + "changed");
+								replAtomic.setValue(o);	
+							}
+							else{
+								System.out.println("Value of " + prop_name + " not changed");
+							}
+						}
+						if (repl instanceof Delegated){
+							((Delegated)repl).update();
+						}
+					}
+					else{
+						System.out.println("prop_obj.class is " + prop_obj.getClass());
+						Replicated replObj = DelegatedUtils.convertObject(prop_obj);
+						replProperties.put(prop_name, replObj);
+					}
+				}
+			}
+		}
+		catch (Exception e){
+			System.err.println(e);
+		}
+	}
+
+	public void copyBack(){
+		Class clss = obj.getClass();
+		
+		try{
+			BeanInfo beanInfo = Introspector.getBeanInfo(clss);
+			PropertyDescriptor[] properties_arr = beanInfo.getPropertyDescriptors();
+			
+			for (int i=0; i < properties_arr.length; i++){
+				Method readMethod = properties_arr[i].getReadMethod();
+				Method writeMethod = properties_arr[i].getWriteMethod();
+
+				if ((readMethod != null) && (writeMethod != null)){
+					String prop_name = readMethod.getName();
+					
+					Replicated repl = (Replicated)replProperties.get(prop_name);
+					if (repl instanceof ReplicatedAtomic){
+						ReplicatedAtomic replAtomic = (ReplicatedAtomic)repl;
+						Object[] args = new Object[1];
+						args[0] = replAtomic.getValue();
+						writeMethod.invoke(obj, args);
+					}
+					
+					if (repl instanceof Delegated){
+						((Delegated)repl).copyBack();
+					}
+				}
+			}
+		}
+		catch (Exception e){
+			System.err.println(e);
+		}
+	}
+
+	/* In the nested class FieldEnumeration, "this" of ReplicatedRecord is required
+	* however, "this" corresponds to FieldEnumeration when called within it
+	* that's why I need this function
+	*/
+	private DelegatedReplicatedObject getthis()
+	{
+		return this;
+	}
+	
+	private class FeatureEnumeration implements Enumeration
+	{  
+		
+		int i;
+		//boolean flag; // Whether field or property should be enumerated
+		FeatureEnumeration() {
+			i = 0;
+			//flag = false;
+			//initializeReplicatedFields();
+			update();
+		}
+		
+		public Object nextElement() {
+			switch (i){
+			case 0:
+				{
+					i++;
+					//return replFields;
+					return replProperties;
+				}
+			/*
+			case 1:
+				{
+					i++;
+					return replProperties;
+				}
+			*/
+			default:
+				{
+					return null;
+				}
+			}
+		}
+		
+		public boolean hasMoreElements()
+		{
+			return i<1;
+		}
+	}
+
+	public Enumeration elements()
+	{
+		// return fields.elements();
+		return new FeatureEnumeration();
+	}
+
+	public Change getChange()
+	{
+		System.out.println("Within DelegatedReplicatedObject.getChange()");
+		//initializeReplicatedFields();
+		update();
+		
+		if (!hasChanged()) return null;
+
+		GenericChangeSet changes = new GenericChangeSet(getObjectID(), 5);
+		
+		try{
+			if (replProperties.hasChanged())
+			{
+				Change properties_change = replProperties.getChange();
+				if (properties_change != null){
+					changes.addChange(new ModifyChange(getObjectID(), new String("properties"), properties_change));
+				}
+			}
+		}
+		catch (Exception e){
+			return null;
+		}
+		
+		return (!changes.isEmpty()) ? changes : null;
+	}
+
+	public Change applyChange(Change change) throws ReplicationException{
+		// Synchronize the hashtables for fields and properties
+		Change ch = super.applyChange(change);
+		// Now, just use the synchronized hashtables set fields and
+		//properties to correct objects
+		
+		//setReplicatedFields();
+		copyBack();
+		return ch;
+	}
+	
+	public void clearChangeSet() {}
+
+	public ElementChange concatElementChanges(ElementChange first, ElementChange second) throws ReplicationException
+	{
+		if (first instanceof ModifyChange) {
+			if (second instanceof ModifyChange) {
+				String name = (String) ((ModifyChange) first).identifier();
+				Replicated elt;
+				
+				//if (name.equals(new String("fields"))){
+					//elt = fields;
+				//}
+				//else{
+					elt = replProperties;
+				//}
+
+				Change first_change = ((ModifyChange) first).change;
+				Change second_change = ((ModifyChange) second).change;
+				Change concat_changes = elt.concatChanges(first_change, second_change);
+				return new ModifyChange(getObjectID(), name, concat_changes);
+			} else
+				return first;
+		} else {
+			return second;
+		}
+	}
+
+	public ChangeSet newChangeSet(int size)
+	{
+		return new GenericChangeSet(getObjectID(), size);
+	}
+
+	public ChangePair newChangeSetPair(ChangeSet cs0, ChangeSet csr)
+	{
+		ChangeSet A0 = new GenericChangeSet(getObjectID(), csr.size());
+		ChangeSet Ar = new GenericChangeSet(getObjectID(), cs0.size());
+		return new ChangePair(A0, Ar, false);
+	}
+
+	public MergeMatrix getClassMergeMatrix()
+	{
+		return class_merge_matrix;
+	}
+
+	public MergeMatrix getInstanceMergeMatrix()
+	{
+		return inst_merge_matrix;
+	}
+
+	public void setInstanceMergeMatrix(MergeMatrix mm)
+	{
+		inst_merge_matrix = (ObjectMergeMatrix) mm;
+	}
+
+	public boolean instanceMergeMatrixExists()
+	{
+		return inst_merge_matrix != null;
+	}
+}
+/*
+   public TreeNode getChildAt(int childIndex)
+   {
+      Object child = fields[childIndex].get(this);
+      String name = fields[childIndex].getName();
+      if (child instanceof Replicated) {
+         ((Replicated) child).setName(name)
+         return (Replicated) child;
+      } else {
+         return new ObjectTreeNode(name, this);
+      }
+      return (TreeNode) ;
+   }
+
+   public int getChildCount()
+   {
+      return fields.length;
+   }
+
+   public int getIndex(TreeNode node)
+   {
+      int i = 0;
+      for (Enumeration e = elements(); e.hasMoreElements(); ) {
+         if (node.equals(e.nextElement())) return i;
+         i++;
+      }
+      return -1;
+   }
+
+   public String getElementName(Object object)
+   {
+      for (int i = 0; i < fields.length; i++) {
+         if (object.equals(fields[i].get(this)) return "." + fields[i].getName();
+      }
+      return ".";
+   }
+*/
+

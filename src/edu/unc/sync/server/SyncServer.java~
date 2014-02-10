@@ -1,0 +1,374 @@
+package edu.unc.sync.server;
+
+import edu.unc.sync.*;
+import java.util.*;
+import java.rmi.*;
+import java.rmi.server.UnicastRemoteObject;
+import java.io.*;
+//import javax.swing.*;
+//import javax.swing.tree.*;
+import com.sun.java.swing.*;
+import com.sun.java.swing.tree.*;
+
+public class SyncServer
+   extends UnicastRemoteObject
+   implements RemoteSyncServer
+{
+   SyncObjectServer object_server;
+   SyncServerInterface ui;
+   File deltas_file, deltas_dir;
+   Hashtable deltas = null;
+   public Vector request_log;
+   Hashtable clientnames = new Hashtable();
+
+   public SyncServer(PropertiesTable properties) throws RemoteException
+   {
+      super();
+      object_server = Sync.getObjectServer();
+      ui = new SyncServerInterface(this, properties);
+      // new BasicMergeActions();  // not used anymore
+
+      String server_home = Sync.getProperty("sync.server.home");
+
+      deltas_file = new File(server_home, "deltas.sjo");
+      if (deltas_file.exists()) {
+         try {
+            deltas = (Hashtable) (new ObjectInputStream(new FileInputStream(deltas_file))).readObject();
+         } catch (Exception e) {
+            throw new SyncException("Error instantiating object store: " + e.toString());
+         }
+      } else {
+         deltas = new Hashtable(100);
+      }
+      deltas_dir = new File(server_home, "deltas");
+      if (!deltas_dir.exists()) deltas_dir.mkdir();
+   }
+
+   public Replicated getObject(ObjectID oid) throws RemoteException
+   {
+      try {
+         Replicated obj = object_server.getObject(oid);
+         if (obj.hasChanged()) commitCurrentChanges(obj);
+         return obj;
+      } catch(Exception ex) {
+         throw new RemoteException(ex.toString());
+      }
+   }
+
+   public ObjectID putObject(Replicated object) throws RemoteException
+   {
+      object_server.putObject(object);
+      return object.getObjectID();
+   }
+/*
+   public Object getAttribute(ObjectID oid, String attr) throws RemoteException
+   {
+      try {
+         return object_server.getAttribute(oid, attr);
+      } catch(SyncException ex) {
+         throw new RemoteException(ex.toString());
+      }
+   }
+
+   public void setAttribute(ObjectID oid, String attr, Object value) throws RemoteException
+   {
+      try {
+         object_server.setAttribute(oid, attr, value);
+      } catch(SyncException ex) {
+         throw new RemoteException(ex.toString());
+      }
+   }
+*/   
+   public TreeNode getTreeRoot() throws RemoteException
+   {
+      Folder root = (Folder) object_server.getRootObject();
+      return new FolderTreeNodeCopy((FolderTreeNode) root.getTreeNode());
+   }
+   
+   public ChangeVector getChangeVector(ObjectID oid)
+   {
+      ChangeVector V;
+      Object obj = deltas.get(oid);
+      if (obj == null) {
+         V = new ChangeVector(Sync.getObject(oid).getVersion());
+         deltas.put(oid, V);
+         return V;
+      } else if (obj instanceof ChangeVector) {
+         return (ChangeVector) obj;
+      } else if (obj instanceof File) {
+         try {
+            V = (ChangeVector) (new ObjectInputStream(new FileInputStream((File) obj))).readObject();
+            deltas.put(oid, V);
+            return V;
+         } catch (Exception ex) {
+            System.err.println("Error reading change vector for object " + oid + ": " + ex);
+            V = new ChangeVector(Sync.getObject(oid).getVersion());
+            deltas.put(oid, V);
+            return V;
+         }
+      } else {
+         System.err.println("Error: unexpected type in getChangeVector: " + obj.getClass().getName());
+         return null;
+      }
+   }
+
+   public Change synchronizeObject(ObjectID oid, Change client_changes, String name, Remote remote_obj) throws RemoteException
+   {
+      System.out.println("Received request for synchronizing " + oid + ".  Changes:");
+      client_changes.print();
+	  
+	  System.out.println("@@@@@@@@@@@@");
+	  System.out.println(remote_obj);
+	  clientnames.put("rmi:" + name, remote_obj);
+/*	  
+	  for (Enumeration e = clientnames.elements(); e.hasMoreElements(); ){
+		  RemoteSyncClient client = (RemoteSyncClient) e.nextElement();
+		  System.out.println("12121212 " + client);
+		  if (!client.equals((RemoteSyncClient)remote_obj)){ 
+			  System.out.println("client not same, will call notifyAction");
+			  try{
+				  client.notifyAction();
+			  }
+			  catch (Exception ex){
+				  System.out.println("Error when calling notifyAction for client " + client);
+				  ex.printStackTrace();
+			  }
+		  }
+		  else
+		  {
+			  System.out.println("client same, will do nothing");
+		  }
+	  }
+*/
+	  
+      Replicated obj = null;
+      try {
+         obj = object_server.getObject(oid);
+      } catch (SyncException ex) {
+         throw new RemoteException("Error synchronizing object: " + ex.toString());
+      }
+      System.out.println("Got reference for object " + oid);
+      if (obj.hasChanged()) {
+         System.out.println("Committing current changes");
+         try {
+            commitCurrentChanges(obj);
+         } catch (ReplicationException ex) {
+            System.err.println("Error committing current changes");
+            throw new RemoteException(ex.toString());
+         }
+         System.out.println("Committed current changes");
+      }
+      int client_version = client_changes.getFromVersion();
+      int server_version = obj.getVersion();
+      
+      System.out.println("Client at version " + client_version + ", server at version " + server_version);
+
+      Change server_changes = null;
+      if (client_version == server_version) {
+         server_changes = new NullChange();
+      } else if (client_version > server_version) {
+         throw new RemoteException("Error synchronizing object: client version should not be greater than server version.  Reload object.");
+      } else {
+         ChangeVector V = getChangeVector(oid);
+         try {server_changes = V.unionChangeSets(obj, client_version);}
+         catch (ReplicationException ex) {
+            throw new RemoteException("Error concatenating server change sets: " + ex);
+         }
+         if (server_changes instanceof ChangeSet && ((ChangeSet) server_changes).isEmpty()) server_changes = new NullChange();
+      }
+      
+      System.out.println("Server changes:");
+      server_changes.print();
+
+      Change to_client = null;
+      try {
+         to_client = mergeChanges((Replicated) obj, server_changes, client_changes);
+      } catch (Exception ex) {
+         System.err.println("Error merging changes to object " + oid + ": " + ex);
+         ex.printStackTrace();
+         throw new RemoteException(ex.toString());
+      }
+      to_client.setFromVersion(client_version);
+      to_client.setToVersion(obj.getVersion());
+      
+	  ui.doRefresh();
+	  
+      System.out.println("Merged changes:");
+      to_client.print();
+
+	  //
+	  for (Enumeration e = clientnames.elements(); e.hasMoreElements(); ){
+		  RemoteSyncClient client = (RemoteSyncClient) e.nextElement();
+		  System.out.println("12121212 " + client);
+		  if (!client.equals((RemoteSyncClient)remote_obj)){ 
+			  System.out.println("client not same, will call notifyAction");
+			  try{
+				  client.notifyAction();
+			  }
+			  catch (Exception ex){
+				  System.out.println("Error when calling notifyAction for client " + client);
+				  ex.printStackTrace();
+			  }
+		  }
+		  else
+		  {
+			  System.out.println("client same, will do nothing");
+		  }
+	  }
+	  //
+      return to_client;
+   }
+
+   protected void commitCurrentChanges(Replicated object) throws ReplicationException
+   {
+      System.out.println("object class: " + object.getClass().getName());
+      Change current = object.getChange();
+      ChangeVector V = getChangeVector(object.getObjectID());
+      if (current != null) {
+         System.out.println("Current changes, version = " + object.getVersion());
+         current.print();
+         V.addElement(current);
+         object.setVersion(object.getVersion() + 1);
+      } else {
+         System.out.println("No current changes after all");
+      }
+      object.clearChanged();
+   }
+
+   private void commitChanges(Replicated object, Change changes) throws ReplicationException
+   {
+      System.out.println("In commitChanges. Changes to commit:");
+      changes.print();
+      Change rejected = object.applyChange(changes);
+      System.out.println("In commitChanges. Changes rejected:");
+      if (rejected != null) rejected.print();
+      else System.out.println("none");
+      ChangeVector V = getChangeVector(object.getObjectID());
+      V.addElement(changes);
+      object.clearChanged();
+      object.setVersion(object.getVersion() + 1);
+   }
+
+   private Change mergeChanges(Replicated object, Change C0, Change Cr) throws ReplicationException
+   {
+      // C0: changes made to central replica since last synchronization
+      //     of remote replica
+      // Cr: changes made to remote replica since its last synchronization.
+      // M:  merged changes (pair: changes to apply to central replica
+      //     and changes to apply to remote replica
+      // A0: changes to apply to central replica
+      // Ar: changes to apply to remote replica
+      // i:  current version of remote replica
+      // j:  current version of central replica
+
+      Change A0, Ar;
+      ChangePair M;
+
+      if (C0 instanceof NullChange & Cr instanceof NullChange) {
+         A0 = null;
+         Ar = null;
+      }
+      else {
+         M = object.mergeChanges(C0, Cr);
+         A0 = M.central;
+         Ar = M.remote;
+      }
+
+      if (A0 != null & !(A0 instanceof NullChange)) {
+         // for correctness, this method must execute atomically
+         commitChanges(object, A0);
+      }
+
+      return (Ar != null) ? Ar : new NullChange();
+   }
+   
+   void saveDeltas()
+   {
+      for (Enumeration e = deltas.keys(); e.hasMoreElements(); ) {
+         ObjectID oid = (ObjectID) e.nextElement();
+         Object obj = deltas.get(oid);
+         File file = new File(deltas_dir, oid.toString());
+         try {
+            (new ObjectOutputStream(new FileOutputStream(file))).writeObject(obj);
+            deltas.put(oid, file);
+         } catch (IOException ex) {
+            System.err.println("Error saving changes to object " + oid.toString() + ": " + ex);
+            deltas.remove(oid);
+         }
+      }
+      try {
+         (new ObjectOutputStream(new FileOutputStream(deltas_file))).writeObject(deltas);
+      } catch (IOException ex) {
+         System.err.println("Error saving object changes: " + ex);
+      }
+   }
+
+   public void shutdown()
+   {
+      if (object_server != null) {
+         try {
+            object_server.shutdown();
+         } catch (SyncException ex) {
+            System.err.println("Error shutting down Sync object server: " + ex);
+         }
+      }
+      saveDeltas();
+   }
+
+   public static void main(String[] args)
+   {
+      Properties sync_props = new Properties();
+      File sync_props_file = new File(System.getProperty("user.home") + File.separator + "sync.jprops");
+      try {
+         sync_props.load(new FileInputStream(sync_props_file));
+         Sync.setProperties(sync_props);
+      } catch (Exception ex) {
+         System.err.println(ex);
+         System.exit(1);
+      }
+      
+      String host_name;
+      try {
+         host_name = java.net.InetAddress.getLocalHost().getHostName();
+         if (host_name.indexOf('.') == -1) host_name = host_name + "." + sync_props.getProperty("domain");
+      } catch (java.net.UnknownHostException ex) {
+         host_name = "localhost";
+      }
+      
+      // String host_name = sync_props.getProperty("localhost");
+      String port = sync_props.getProperty("sync.rmiregistry.port");
+      String server_home = sync_props.getProperty("sync.server.home");
+      try {
+         // create object server and do Sync.setObjectServer() within
+         new SyncObjectServer(server_home);
+      } catch (Exception e) {
+         System.err.println(e);
+         e.printStackTrace();
+         System.exit(1);
+      }
+      
+      PropertiesTable server_props = null;
+      try {
+         File props_file = new File(server_home, "server.jprops");
+         server_props = new PropertiesTable(props_file);
+         // add client properties to Sync properties so they are accessible
+         // from within Replicated objects via static Sync.getProperty method
+         sync_props.load(new FileInputStream(props_file));
+      } catch (Exception ex) {
+         System.err.println("Error loading properties: " + ex);
+      }
+
+      // Create and install a security manager
+      System.setSecurityManager(new RMISecurityManager());
+      try {
+         SyncServer obj = new SyncServer(server_props);
+         String name = "//" + host_name + ":" + port + "/SyncServer";
+         Naming.rebind(name, obj);
+         System.out.println(name + " bound in registry");
+         // Sync.setSyncServer(obj);
+      } catch (Exception e) {
+         System.out.println("SyncServer error: " + e.getMessage());
+         e.printStackTrace();
+      }
+   }
+}
