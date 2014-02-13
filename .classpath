@@ -8,6 +8,6 @@
 	<classpathentry combineaccessrules="false" kind="src" path="/util"/>
 	<classpathentry kind="lib" path="D:/dewan_backup/Java/lib/swt.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/javareflectcommon"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/ObjectEditor"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/uigen"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
