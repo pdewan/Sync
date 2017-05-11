@@ -1,7 +1,9 @@
 package edu.unc.sync.server;
 
 import edu.unc.sync.*;
+import bus.uigen.CompleteOEFrame;
 import bus.uigen.ObjectEditor;
+
 import java.util.*;
 import java.rmi.*;
 import java.rmi.registry.LocateRegistry;
@@ -9,6 +11,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.RemoteObject;
 import java.rmi.server.UnicastRemoteObject;
 import java.io.*;
+
 //import javax.swing.*;
 //import javax.swing.tree.*;
 //import com.sun.java.swing.*;
@@ -773,12 +776,12 @@ void asyncNotifyClientNewClient(String clientName, RemoteSyncClient client,  Rem
    }
     public static void createSyncDriver(Hashtable argsTable, SyncServer server) {
         SyncDriver theDriver = null;
-        bus.uigen.uiFrame frame = null;
+        CompleteOEFrame frame = null;
        
         if ((argsTable.containsKey(OE))) {
           //theDriver = new SyncDriver(server.getTreeRoot());
           //frame = ObjectEditor.edit(client.getServerProxyTable());       
-          frame = ObjectEditor.edit(server.ui.getRootFolder());
+          frame =  ObjectEditor.edit(server.ui.getRootFolder());
           frame.setTitle("Sync Server:" + server.getHostName()+ "/" + server.getServerID());
         }
 

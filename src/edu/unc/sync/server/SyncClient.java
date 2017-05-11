@@ -12,6 +12,7 @@ import javax.swing.JTable;
 
 import util.misc.MainArgsProcessor;
 import util.models.AListenableHashtable;
+import bus.uigen.CompleteOEFrame;
 //import com.sun.java.swing.*;
 //import com.sun.java.swing.tree.*;
 import bus.uigen.ObjectEditor;
@@ -559,13 +560,13 @@ public class SyncClient
 
       //theDriver = new SyncDriver(client);
     	Enumeration elements = client.getServerProxyTable().elements();
-    	uiFrame editor1;
+    	CompleteOEFrame editor1;
     	if (serverProxy != null) {
     		editor1 = ObjectEditor.edit(serverProxy) ;
     	} else if (elements.hasMoreElements())
     		editor1 = ObjectEditor.treeBrowse(client.getServerProxyTable(), elements.nextElement());
     	else    	
-			editor1 = ObjectEditor.edit(client.getServerProxyTable()); 
+			editor1 =  ObjectEditor.edit(client.getServerProxyTable()); 
     	if (client.ui == null) return;
     	//uiFrame editor2 = ObjectEditor.treeBrowse(client.ui.getTreeRoot(), client.ui.getRootFolder());
 		client.ui.setErrorMsgsFrameIfUndefined(editor1.getFrame());

@@ -29,7 +29,7 @@ public class SyncObjectEditor implements UndoingSyncApplication{		SyncClient s
 		System.out.println("add called with object " + test + "string" + name);				}		editObject (test);		/*
 		uiFrame editor = uiGenerator.generateUIFrame(test);				editors.addElement(editor);	
 		editor.setVisible(true);		*/		 
-			}	public void addObject(Object model, String name)	{						try {		editObject (model);		} catch (Exception e) {			e.printStackTrace();		}		/*		uiFrame editor = uiGenerator.generateUIFrame(test);				editors.addElement(editor);			editor.setVisible(true);		*/		 			}	void editObject (Object o) {		uiFrame editor = ObjectEditor.edit(o);				editors.addElement(editor);			objectToEditor.put(o, editor);		//editor.setVisible(true);	}
+			}	public void addObject(Object model, String name)	{						try {		editObject (model);		} catch (Exception e) {			e.printStackTrace();		}		/*		uiFrame editor = uiGenerator.generateUIFrame(test);				editors.addElement(editor);			editor.setVisible(true);		*/		 			}	void editObject (Object o) {		uiFrame editor = (uiFrame) ObjectEditor.edit(o);				editors.addElement(editor);			objectToEditor.put(o, editor);		//editor.setVisible(true);	}
 		public Replicated newObject(String className, String name)
 	{
 		//b = new DelegationTest();
